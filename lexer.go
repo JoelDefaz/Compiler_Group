@@ -110,9 +110,7 @@ func (l *Lexer) resetPosition() {
 func (l *Lexer) Lex() (Position, Token, string) {
 	// keep looping until we return a token
 	for {
-
 		switch r {
-
 		default:
 			if unicode.IsSpace(r) {
 				continue // nothing to do here, just move on
