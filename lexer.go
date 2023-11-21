@@ -1,5 +1,13 @@
 package main
 
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"os"
+	"unicode"
+)
+
 type Token int
 
 const (
@@ -70,47 +78,25 @@ func (l *Lexer) Lex() (Position, Token, string) {
 			// should just return the raw error to the user
 			panic(err)
 		}
-	}
-}
 
-func (l *Lexer) Lex() (Position, Token, string) {
-	// keep looping until we return a token
-    for {
-        // update the column to the position of the newly read in rune
-        l.pos.column++
+		// update the column to the position of the newly read in rune
+		l.pos.column++
 
-        switch r {
-        case '\n':
-            l.resetPosition()
-        case ';':
-            return l.pos, SEMI, ";"
-        case '+':
-            return l.pos, ADD, "+"
-        case '-':
-            return l.pos, SUB, "-"
-        case '*':
-            return l.pos, MUL, "*"
-        case '/':
-            return l.pos, DIV, "/"
-        case '=':
-            return l.pos, ASSIGN, "="
-        default:
-            if unicode.IsSpace(r) {
-                continue // nothing to do here, just move on
-            }
-        }
-    }
-}
-
-func (l *Lexer) resetPosition() {
-	l.pos.line++
-	l.pos.column = 0
-}
-
-func (l *Lexer) Lex() (Position, Token, string) {
-	// keep looping until we return a token
-	for {
 		switch r {
+		case '\n':
+			l.resetPosition()
+		case ';':
+			return l.pos, SEMI, ";"
+		case '+':
+			return l.pos, ADD, "+"
+		case '-':
+			return l.pos, SUB, "-"
+		case '*':
+			return l.pos, MUL, "*"
+		case '/':
+			return l.pos, DIV, "/"
+		case '=':
+			return l.pos, ASSIGN, "="
 		default:
 			if unicode.IsSpace(r) {
 				continue // nothing to do here, just move on
@@ -120,16 +106,29 @@ func (l *Lexer) Lex() (Position, Token, string) {
 				l.backup()
 				lit := l.lexInt()
 				return startPos, INT, lit
+			} else if unicode.IsLetter(r) {
+				// backup and let lexIdent rescan the beginning of the ident
+				startPos := l.pos
+				l.backup()
+				lit := l.lexIdent()
+				return startPos, IDENT, lit
+			} else {
+				return l.pos, ILLEGAL, string(r)
 			}
-        }
-    }
+		}
+	}
+}
+
+func (l *Lexer) resetPosition() {
+	l.pos.line++
+	l.pos.column = 0
 }
 
 func (l *Lexer) backup() {
 	if err := l.reader.UnreadRune(); err != nil {
 		panic(err)
 	}
-	
+
 	l.pos.column--
 }
 
@@ -157,36 +156,6 @@ func (l *Lexer) lexInt() string {
 	}
 }
 
-// Lex scans the input for the next token. It returns the position of the token,
-// the token's type, and the literal value.
-func (l *Lexer) Lex() (Position, Token, string) {
-	// keep looping until we return a token
-	for {
-		...
-		switch r {
-		...
-		default:
-			if unicode.IsSpace(r) {
-				continue // nothing to do here, just move on
-			} else if unicode.IsDigit(r) {
-				// backup and let lexInt rescan the beginning of the int
-				startPos := l.pos
-				l.backup()
-				lit := l.lexInt()
-				return startPos, INT, lit
-			} else if unicode.IsLetter(r) {
-				// backup and let lexIdent rescan the beginning of the ident
-				startPos := l.pos
-				l.backup()
-				lit := l.lexIdent()
-				return startPos, IDENT, lit
-			} else {
-				return l.pos, ILLEGAL, string(r)
-			}
-		}
-	}
-}
-
 // lexIdent scans the input until the end of an identifier and then returns the
 // literal.
 func (l *Lexer) lexIdent() string {
@@ -199,8 +168,8 @@ func (l *Lexer) lexIdent() string {
 				return lit
 			}
 		}
-			
-        l.pos.column++
+
+		l.pos.column++
 		if unicode.IsLetter(r) {
 			lit = lit + string(r)
 		} else {
