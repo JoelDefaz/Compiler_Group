@@ -15,7 +15,9 @@ const (
 	ILLEGAL
 	IDENT
 	INT
-	SEMI // ;
+	SEMI   // ;
+	STRING // Cualquier Palabra
+	COM    // " -> Comillas
 
 	// Infix ops
 	ADD // +
@@ -32,12 +34,14 @@ var tokens = []string{
 	IDENT:   "IDENT",
 	INT:     "INT",
 	SEMI:    ";",
+	STRING:  "String",
 
 	// Infix ops
 	ADD: "+",
 	SUB: "-",
 	MUL: "*",
 	DIV: "/",
+	COM: "\"",
 
 	ASSIGN: "=",
 }
@@ -97,6 +101,8 @@ func (l *Lexer) Lex() (Position, Token, string) {
 			return l.pos, DIV, "/"
 		case '=':
 			return l.pos, ASSIGN, "="
+		case '"':
+			return l.pos, COM, "\""
 		default:
 			if unicode.IsSpace(r) {
 				continue // nothing to do here, just move on
@@ -111,7 +117,11 @@ func (l *Lexer) Lex() (Position, Token, string) {
 				startPos := l.pos
 				l.backup()
 				lit := l.lexIdent()
-				return startPos, IDENT, lit
+				if len(lit) > 1 {
+					return startPos, STRING, lit
+				} else {
+					return startPos, IDENT, lit
+				}
 			} else {
 				return l.pos, ILLEGAL, string(r)
 			}

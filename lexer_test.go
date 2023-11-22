@@ -15,7 +15,6 @@ func getTokens(l *Lexer) []Token {
 
 		tokens = append(tokens, tok)
 	}
-
 	return tokens
 }
 
